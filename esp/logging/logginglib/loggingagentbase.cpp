@@ -169,8 +169,9 @@ IEspUpdateLogRequestWrap* CLogContentFilter::filterLogContent(IEspUpdateLogReque
             Owned<IPropertyTree> userRequest = req->getUserRequest();
             const char* userResp = req->getUserResponse();
             const char* logDatasets = req->getLogDatasets();
+            const char* backEndReq = req->getBackEndRequest();
             const char* backEndResp = req->getBackEndResponse();
-            if (!espContext && !userContext && !userRequest && (!userResp || !*userResp) && (!backEndResp || !*backEndResp))
+            if (!espContext && !userContext && !userRequest && (!userResp || !*userResp) && (!backEndResp || !*backEndResp)  && (!backEndReq || !*backEndReq))
                 throw MakeStringException(EspLoggingErrors::UpdateLogFailed, "Failed to read log content");
             source = userContext->queryProp("Source");
 
@@ -204,6 +205,9 @@ IEspUpdateLogRequestWrap* CLogContentFilter::filterLogContent(IEspUpdateLogReque
             }
             if (backEndResp && *backEndResp)
                 logContentTree->addProp(espLogContentGroupNames[ESPLCGBackEndResp], backEndResp);
+            if (backEndReq && *backEndReq)
+                logContentTree->addProp(espLogContentGroupNames[ESPLCGBackEndReq], backEndReq);
+
         }
     }
     else
@@ -277,6 +281,15 @@ IEspUpdateLogRequestWrap* CLogContentFilter::filterLogContent(IEspUpdateLogReque
                 if (resp && *resp)
                 {
                     logContentTree->addProp(espLogContentGroupNames[ESPLCGBackEndResp], resp);
+                    logContentEmpty = false;
+                }
+            }
+            if (logBackEndReq)
+            {
+                const char* fullreq = req->getBackEndRequest();
+                if (fullreq && *fullreq)
+                {
+                    logContentTree->addProp(espLogContentGroupNames[ESPLCGBackEndReq], fullreq);
                     logContentEmpty = false;
                 }
             }

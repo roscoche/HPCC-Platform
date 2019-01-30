@@ -96,7 +96,7 @@ bool CLoggingManager::updateLog(IEspLogEntry* entry, StringBuffer& status)
     if (entry->getLogInfoTree())
         return updateLog(entry->getEspContext(), entry->getOption(), entry->getLogInfoTree(), entry->getExtraLog(), status);
 
-    return updateLog(entry->getEspContext(), entry->getOption(), entry->getUserContextTree(), entry->getUserRequestTree(),
+    return updateLog(entry->getEspContext(), entry->getOption(), entry->getUserContextTree(), entry->getUserRequestTree(), entry->getBackEndReq(),
         entry->getBackEndResp(), entry->getUserResp(), entry->getLogDatasets(), status);
 }
 
@@ -146,44 +146,44 @@ bool CLoggingManager::updateLog(IEspContext* espContext, const char* option, IPr
     return bRet;
 }
 
-bool CLoggingManager::updateLog(IEspContext* espContext, const char* option, IPropertyTree* userContext, IPropertyTree* userRequest,
-        const char* backEndResp, const char* userResp, const char* logDatasets, StringBuffer& status)
+bool CLoggingManager::updateLog(IEspContext* espContext, const char* option, IPropertyTree* userContext, IPropertyTree* userRequest, const char* backEndRequest,
+	const char* backEndResp, const char* userResp, const char* logDatasets, StringBuffer& status)
 {
-    if (!initialized)
-        throw MakeStringException(-1,"LoggingManager not initialized");
+	if (!initialized)
+		throw MakeStringException(-1, "LoggingManager not initialized");
 
-    bool bRet = false;
-    try
-    {
-        Owned<IPropertyTree> espContextTree;
-        if (espContext)
-        {
-            espContextTree.setown(createPTree("ESPContext"));
+	bool bRet = false;
+	try
+	{
+		Owned<IPropertyTree> espContextTree;
+		if (espContext)
+		{
+			espContextTree.setown(createPTree("ESPContext"));
 
-            short port;
-            StringBuffer sourceIP;
-            espContext->getServAddress(sourceIP, port);
-            espContextTree->addProp("SourceIP", sourceIP.str());
+			short port;
+			StringBuffer sourceIP;
+			espContext->getServAddress(sourceIP, port);
+			espContextTree->addProp("SourceIP", sourceIP.str());
 
-            const char* userId = espContext->queryUserId();
-            if (userId && *userId)
-                espContextTree->addProp("UserName", userId);
+			const char* userId = espContext->queryUserId();
+			if (userId && *userId)
+				espContextTree->addProp("UserName", userId);
 
-            espContextTree->addProp("ResponseTime", VStringBuffer("%.4f", (msTick()-espContext->queryCreationTime())/1000.0));
-        }
-        Owned<IEspUpdateLogRequestWrap> req =  new CUpdateLogRequestWrap(nullptr, option, espContextTree.getClear(), LINK(userContext), LINK(userRequest),
-            backEndResp, userResp, logDatasets);
-        Owned<IEspUpdateLogResponse> resp =  createUpdateLogResponse();
-        bRet = updateLog(espContext, *req, *resp, status);
-    }
-    catch (IException* e)
-    {
-        status.set("Failed to update log: ");
-        e->errorMessage(status);
-        ERRLOG("%s", status.str());
-        e->Release();
-    }
-    return bRet;
+			espContextTree->addProp("ResponseTime", VStringBuffer("%.4f", (msTick() - espContext->queryCreationTime()) / 1000.0));
+		}
+		Owned<IEspUpdateLogRequestWrap> req = new CUpdateLogRequestWrap(nullptr, option, espContextTree.getClear(), LINK(userContext), LINK(userRequest), backEndRequest,
+			backEndResp, userResp, logDatasets);
+		Owned<IEspUpdateLogResponse> resp = createUpdateLogResponse();
+		bRet = updateLog(espContext, *req, *resp, status);
+	}
+	catch (IException* e)
+	{
+		status.set("Failed to update log: ");
+		e->errorMessage(status);
+		ERRLOG("%s", status.str());
+		e->Release();
+	}
+	return bRet;
 }
 
 bool CLoggingManager::updateLog(IEspContext* espContext, IEspUpdateLogRequestWrap& req, IEspUpdateLogResponse& resp, StringBuffer& status)

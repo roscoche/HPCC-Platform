@@ -559,7 +559,7 @@ void EsdlServiceImpl::handleServiceRequest(IEspContext &context,
     else
         ESPLOG(LogMin,"DESDL: Transaction ID could not be generated!");
 
-    StringBuffer origResp;
+    StringBuffer origResp, soapmsg;
     EsdlMethodImplType implType = EsdlMethodImplUnknown;
 
     if(stricmp(mthName, "echotest")==0 || mthdef.hasProp("EchoTest"))
@@ -660,7 +660,7 @@ void EsdlServiceImpl::handleServiceRequest(IEspContext &context,
             reqcontent.set(reqWriter->str());
             context.addTraceSummaryTimeStamp(LogNormal, "serialized-xmlreq");
 
-            handleFinalRequest(context, crt, tgtcfg, tgtctx, srvdef, mthdef, ns, reqcontent, origResp, isPublishedQuery(implType), implType==EsdlMethodImplProxy);
+            handleFinalRequest(context, crt, tgtcfg, tgtctx, srvdef, mthdef, ns, reqcontent, origResp, isPublishedQuery(implType), implType==EsdlMethodImplProxy, soapmsg);
             context.addTraceSummaryTimeStamp(LogNormal, "end-HFReq");
 
             if (isPublishedQuery(implType))
@@ -680,12 +680,13 @@ void EsdlServiceImpl::handleServiceRequest(IEspContext &context,
     }
 
     context.addTraceSummaryTimeStamp(LogNormal, "srt-resLogging");
-    handleResultLogging(context, tgtctx.get(), req,  origResp.str(), out.str(), logdata.str());
+    handleResultLogging(context, tgtctx.get(), req, soapmsg.str(), origResp.str(), out.str(), logdata.str());
+    //handleResultLogging(context, tgtctx.get(), req,  origResp.str(), out.str(), logdata.str());
     context.addTraceSummaryTimeStamp(LogNormal, "end-resLogging");
     ESPLOG(LogMax,"Customer Response: %s", out.str());
 }
 
-bool EsdlServiceImpl::handleResultLogging(IEspContext &espcontext, IPropertyTree * reqcontext, IPropertyTree * request,const char * rawresp, const char * finalresp, const char * logdata)
+bool EsdlServiceImpl::handleResultLogging(IEspContext &espcontext, IPropertyTree * reqcontext, IPropertyTree * request, const char * rawreq, const char * rawresp, const char * finalresp, const char * logdata)
 {
     bool success = true;
     if (m_oLoggingManager)
@@ -696,6 +697,7 @@ bool EsdlServiceImpl::handleResultLogging(IEspContext &espcontext, IPropertyTree
         entry->setOwnUserContextTree(LINK(reqcontext));
         entry->setOwnUserRequestTree(LINK(request));
         entry->setUserResp(finalresp);
+	entry->setBackEndReq(rawreq);
         entry->setBackEndResp(rawresp);
         entry->setLogDatasets(logdata);
 
@@ -833,9 +835,9 @@ void EsdlServiceImpl::handleFinalRequest(IEspContext &context,
                                          StringBuffer& req,
                                          StringBuffer &out,
                                          bool isroxie,
-                                         bool isproxy)
+                                         bool isproxy,
+                                         StringBuffer &soapmsg)
 {
-    StringBuffer soapmsg;
     soapmsg.append(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">");
