@@ -26,7 +26,9 @@
     "dev-start": "ws",
     "dev-link": "rimraf ./node_modules/@hpcc-js && mklink /J .\\node_modules\\@hpcc-js ..\\..\\..\\hpcc-js\\packages",
     "dev-unlink": "rimraf ./node_modules/@hpcc-js && npm install",
-    "test": "run-s lint"
+    "test": "run-s lint",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "main": "src/stub.js",
   "dependencies": {
@@ -47,7 +49,8 @@
     "dojo-util": "1.14.2",
     "dojox": "1.14.2",
     "es6-promise": "4.2.5",
-    "font-awesome": "4.7.0"
+    "font-awesome": "4.7.0",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "@types/dojo": "1.9.40",
@@ -73,5 +76,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/hpcc-systems/HPCC-Platform"
-  }
+  },
+  "snyk": true
 }
